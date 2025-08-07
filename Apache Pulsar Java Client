@@ -1,0 +1,66 @@
+import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.Schema;
+public class PulsarProducer
+{
+    public static void main( String[] args )
+    {
+        try {
+            PulsarClient client = PulsarClient.builder()
+                    .serviceUrl("pulsar://localhost:6650")
+                    .build();
+            Producer<String> stringProducer = client.newProducer(Schema.STRING)
+                    .topic("starter-topic")
+                    .create();
+            stringProducer.send("Hello Pulsar. Enjoy Your Day! - From Producer");
+            stringProducer.close();
+        }
+        catch (PulsarClientException e) {          
+            e.printStackTrace();
+        }
+       
+    }
+}
+
+import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.Schema;public class PulsarConsumer {
+    public static void main(String[] args) {
+       
+        try {
+            PulsarClient client = PulsarClient.builder()
+                    .serviceUrl("pulsar://localhost:6650")
+                    .build();
+            Consumer<String> consumer = client.newConsumer(Schema.STRING)
+                    .topic("starter-topic")
+                    .subscriptionName("my-subscription")
+                    .subscribe();
+            while (true) {
+            // Listening and waiting for a message
+                 Message<String> msg = consumer.receive();
+               
+                 try {
+                      // Print out that the message has been received
+               
+                    System.out.println("Message received: " + new String(msg.getData()));
+                   
+                    // Send an acknowledgment back so that it can be deleted by the broker
+               
+                     consumer.acknowledge(msg);
+               
+                 } catch (Exception e) {
+               
+                     // Notify that the message delivery failed
+               
+                     //consumer.negativeAcknowledge(msg);
+                 }
+            }
+        }
+        catch(PulsarClientException e) {
+            e.printStackTrace();
+        }
+    }
+}

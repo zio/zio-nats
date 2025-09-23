@@ -1,0 +1,24 @@
+package build
+import mill.*, scalalib.*, publish.*
+
+// mill-version: 1.0.5
+
+object zioNats extends ScalaModule:
+  def scalaVersion = "3.3.6"
+  def mvnDeps      = Seq(
+    mvn"dev.zio::zio:2.0.15",
+    mvn"dev.zio::zio-streams:2.0.15",
+    mvn"io.nats:jnats:2.22.0",
+    mvn"dev.zio::zio-config:4.0.5",
+    mvn"dev.zio::zio-config-magnolia:4.0.5"
+  )
+
+  object test extends ScalaModule with TestModule:
+    def scalaVersion = zioNats.scalaVersion
+    def moduleDeps   = Seq(zioNats)
+    def mvnDeps       = Seq(
+      mvn"io.nats:jnats-server-runner:2.0.2",
+      mvn"dev.zio::zio-test:2.0.15",
+      mvn"dev.zio::zio-test-sbt:2.0.15",
+    )
+    def testFramework = "zio.test.sbt.ZTestFramework"

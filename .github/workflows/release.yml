@@ -44,14 +44,16 @@ jobs:
     - name: Build JAR
       run: ./mill zioNats.jar
 
+    - name: Prepare Release Assets
+      run: |
+        mkdir -p release-assets
+        cp ./out/zioNats/jar.dest/out.jar release-assets/zio-nats-${{ github.ref_name }}.jar
+
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        name: Release ${{ github.ref_name }}
         body: |
           Release ${{ github.ref_name }} of zio-nats
 
@@ -60,15 +62,7 @@ jobs:
           - Comprehensive test suite
           - Ready for production use
 
+        files: |
+          release-assets/zio-nats-${{ github.ref_name }}.jar
         draft: false
         prerelease: false
-
-    - name: Upload JAR
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./out/zioNats/jar.dest/out.jar
-        asset_name: zio-nats-${{ github.ref_name }}.jar
-        asset_content_type: application/java-archive

@@ -1,6 +1,15 @@
 # zio-nats
 
+[![CI](https://github.com/zio/zio-nats/actions/workflows/ci.yml/badge.svg)](https://github.com/zio/zio-nats/actions/workflows/ci.yml)
+[![Release](https://github.com/zio/zio-nats/actions/workflows/release.yml/badge.svg)](https://github.com/zio/zio-nats/actions/workflows/release.yml)
+
 A lightweight ZIO 2.x wrapper around the official Java NATS client (jnats).
+
+## Project Status
+
+**Version**: 0.1.0
+**Status**: Ready for production use
+**Compatibility**: ZIO 2.x, Scala 3.3.6+
 
 Features:
 - ZLayer-based managed connection acquisition & clean shutdown via `Nats.live` / `Nats.liveZIO`
@@ -94,6 +103,22 @@ val streamProgram = ZStream.serviceWithStream[Nats](_.subscribe("orders.created"
   .runDrain
 ```
 
+## Installation
+
+Add to your `build.mill` file:
+
+```scala
+def mvnDeps = Seq(
+  mvn"dev.zio::zio-nats:0.1.0"
+)
+```
+
+Or if using sbt, add to your `build.sbt`:
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-nats" % "0.1.0"
+```
+
 ## Testing
 
 An integration test spec (`NatsSpec`) exercises publish / subscribe, request / reply, and queue group distribution. Run with Mill:
@@ -103,6 +128,10 @@ mill zioNats.test
 ```
 
 It uses the [java nats server runner](https://github.com/nats-io/java-nats-server-runner) and requires a NATS server being installed locally.
+
+### Running Tests in CI
+
+The project includes GitHub Actions workflows for continuous integration and release management. Tests run automatically on every push and pull request.
 
 ## Notes & Future Work
 - Add request/reply helper for automatic responders

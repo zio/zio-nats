@@ -1,11 +1,24 @@
 package build
 import mill.*, scalalib.*, publish.*
 
-// mill-version: 1.0.5
+// mill-version: 1.0.6
 
-object zioNats extends ScalaModule:
+object zioNats extends ScalaModule with PublishModule:
   def scalaVersion = "3.3.6"
-  def mvnDeps      = Seq(
+  def publishVersion = "0.1.0"
+
+  def pomSettings = PomSettings(
+    description = "A lightweight ZIO 2.x wrapper around the official Java NATS client",
+    organization = "dev.zio",
+    url = "https://github.com/zio/zio-nats",
+    licenses = Seq(License.`Apache-2.0`),
+    versionControl = VersionControl.github("zio", "zio-nats"),
+    developers = Seq(
+      Developer("zio-contributors", "ZIO Contributors", "https://github.com/zio/zio-nats")
+    )
+  )
+
+  def mvnDeps = Seq(
     mvn"dev.zio::zio:2.0.15",
     mvn"dev.zio::zio-streams:2.0.15",
     mvn"io.nats:jnats:2.22.0",

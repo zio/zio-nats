@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Cache Mill
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/mill
+          ~/.mill
+        key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+        restore-keys: |
+          ${{ runner.os }}-mill-
+
+    - name: Install NATS Server
+      run: |
+        curl -L https://github.com/nats-io/nats-server/releases/download/v2.10.4/nats-server-v2.10.4-linux-amd64.zip -o nats-server.zip
+        unzip nats-server.zip
+        sudo mv nats-server-v2.10.4-linux-amd64/nats-server /usr/local/bin/
+
+    - name: Make mill executable
+      run: chmod +x ./mill
+
+    - name: Run tests
+      run: ./mill zioNats.test
+
+    - name: Build JAR
+      run: ./mill zioNats.jar
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Release ${{ github.ref_name }} of zio-nats
+
+          ## What's Changed
+          - ZIO wrapper for NATS client
+          - Comprehensive test suite
+          - Ready for production use
+
+        draft: false
+        prerelease: false
+
+    - name: Upload JAR
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./out/zioNats/jar.dest/out.jar
+        asset_name: zio-nats-${{ github.ref_name }}.jar
+        asset_content_type: application/java-archive

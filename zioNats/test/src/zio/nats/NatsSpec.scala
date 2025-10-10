@@ -10,17 +10,17 @@ object NatsSpec extends ZIOSpecDefault:
     suite("NatsSpec")(
       test("publishString -> subscribe single message") {
         for
-          nats    <- ZIO.service[Nats]
+          nats   <- ZIO.service[Nats]
           subject = "test.subject1"
-          fiber   <- nats.subscribe(subject).take(1).runCollect.fork
-          _       <- nats.publishString(subject, "hello-nats").delay(100.millis)
-          msgs    <- fiber.join
+          fiber  <- nats.subscribe(subject).take(1).runCollect.fork
+          _      <- nats.publishString(subject, "hello-nats").delay(100.millis)
+          msgs   <- fiber.join
         yield assertTrue(msgs.head.asString() == "hello-nats")
       },
       test("request/reply round trip") {
         for
-          subject  <- Random.nextUUID.map(u => s"test.req.${u.toString}")
-          nats     <- ZIO.service[Nats]
+          subject   <- Random.nextUUID.map(u => s"test.req.${u.toString}")
+          nats      <- ZIO.service[Nats]
           responder <- nats
                          .subscribe(subject)
                          .take(1)
@@ -28,8 +28,8 @@ object NatsSpec extends ZIOSpecDefault:
                            nats.replyString(msg, msg.asString() + "-ok")
                          }
                          .fork
-          resp <- nats.requestString(subject, "ping", 2.seconds).delay(100.millis)
-          _    <- responder.join
+          resp      <- nats.requestString(subject, "ping", 2.seconds).delay(100.millis)
+          _         <- responder.join
         yield assertTrue(resp == "ping-ok")
       },
       test("queue group distributes messages across subscribers") {
@@ -63,15 +63,14 @@ object NatsSpec extends ZIOSpecDefault:
       }
     ).provideLayerShared(
       NatsServerTest.runner >>>
-      ZLayer {
-        for
-          runner <- ZIO.service[NatsServerRunner]
-          port = runner.getPort
-          nats <- Nats.liveZIO(NatsConfig(port = port))
-        yield nats
-      }
+        ZLayer {
+          for
+            runner <- ZIO.service[NatsServerRunner]
+            port    = runner.getPort
+            nats   <- Nats.liveZIO(NatsConfig(port = port))
+          yield nats
+        }
     ) @@ TestAspect.sequential @@ TestAspect.withLiveClock
-
 
 object NatsServerTest:
   val runner = ZLayer {

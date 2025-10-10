@@ -6,7 +6,7 @@ Features:
 - ZLayer-based managed connection acquisition & clean shutdown via `Nats.live` / `Nats.liveZIO`
 - Simple publish & request APIs (string or byte array)
 - Streaming consume API via ZStream using a NATS Dispatcher bridged through a ZIO Queue
-- Minimal trait (`Nats`) you pull from the environment with `ZIO.service[Nats]`
+- Minimal service (`Nats`) you pull from the environment with `ZIO.service[Nats]`
 - Configurable via ZIO Config (env vars or system properties by default)
 
 ## Usage

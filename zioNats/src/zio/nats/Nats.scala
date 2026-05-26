@@ -41,6 +41,8 @@ trait Nats:
     publish(subject, data.toArray)
   def publishString(subject: String, data: String, charset: Charset = StandardCharsets.UTF_8): Task[Unit] =
     publish(subject, data.getBytes(charset))
+  def flush(timeout: Duration = 1.second): Task[Unit]
+  def drain(timeout: Duration = 1.second): Task[Unit]
   def request(subject: String, data: Array[Byte], timeout: Duration): Task[NatsMessage]
   def request(subject: String, data: Array[Byte]): Task[NatsMessage]                                      =
     request(subject, data, 5.seconds)
@@ -106,6 +108,12 @@ object Nats:
         new Nats:
           override def publish(subject: String, data: Array[Byte]): Task[Unit] =
             ZIO.attemptBlocking(conn.publish(subject, data))
+
+          override def flush(timeout: Duration): Task[Unit] =
+            ZIO.attemptBlocking(conn.flush(timeout)).unit
+
+          override def drain(timeout: Duration): Task[Unit] =
+            ZIO.fromCompletableFuture(conn.drain(timeout)).unit
 
           override def request(subject: String, data: Array[Byte], timeout: Duration): Task[NatsMessage] =
             ZIO.attemptBlocking {

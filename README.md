@@ -5,6 +5,7 @@ A lightweight ZIO 2.x wrapper around the official Java NATS client (jnats).
 Features:
 - ZLayer-based managed connection acquisition & clean shutdown via `Nats.live` / `Nats.liveZIO`
 - Simple publish & request APIs (string or byte array)
+- Basic connection controls like `flush` and `drain`
 - Streaming consume API via ZStream using a NATS Dispatcher bridged through a ZIO Queue
 - Minimal service (`Nats`) you pull from the environment with `ZIO.service[Nats]`
 - Configurable via ZIO Config (env vars or system properties by default)

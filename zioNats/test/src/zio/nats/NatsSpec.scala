@@ -10,12 +10,22 @@ object NatsSpec extends ZIOSpecDefault:
     suite("NatsSpec")(
       test("publishString -> subscribe single message") {
         for
-          nats   <- ZIO.service[Nats]
-          subject = "test.subject1"
-          fiber  <- nats.subscribe(subject).take(1).runCollect.fork
+          subject <- Random.nextUUID.map(u => s"test.subject.${u.toString}")
+          nats    <- ZIO.service[Nats]
+          got     <- Promise.make[Nothing, String]
+          fiber   <- nats
+                       .subscribe(subject)
+                       .take(1)
+                       .foreach(msg => got.succeed(msg.asString()).unit)
+                       .fork
+          _      <- nats.flush()
+          _      <- ZIO.sleep(1.second)
           _      <- nats.publishString(subject, "hello-nats").delay(100.millis)
-          msgs   <- fiber.join
-        yield assertTrue(msgs.head.asString() == "hello-nats")
+          _      <- nats.flush()
+          msgOpt  <- got.await.timeout(10.seconds)
+          _       <- fiber.interrupt
+          msg     <- ZIO.fromOption(msgOpt)
+        yield assertTrue(msg == "hello-nats")
       },
       test("request/reply round trip") {
         for
@@ -31,6 +41,14 @@ object NatsSpec extends ZIOSpecDefault:
           resp      <- nats.requestString(subject, "ping", 2.seconds).delay(100.millis)
           _         <- responder.join
         yield assertTrue(resp == "ping-ok")
+      },
+      test("flush completes on an active connection") {
+        for
+          subject <- Random.nextUUID.map(u => s"test.flush.${u.toString}")
+          nats    <- ZIO.service[Nats]
+          _       <- nats.publishString(subject, "hello")
+          _       <- nats.flush()
+        yield assertTrue(true)
       },
       test("queue group distributes messages across subscribers") {
         for
@@ -59,6 +77,14 @@ object NatsSpec extends ZIOSpecDefault:
           msg     <- ZIO.fromOption(msgOpt)
           fake     = msg.copy(replyTo = None) // simulate missing replyTo
           result  <- nats.replyString(fake, "data").either
+        yield assertTrue(result.isLeft)
+      },
+      test("drain closes the underlying connection for subsequent publishes") {
+        for
+          subject <- Random.nextUUID.map(u => s"test.drain.${u.toString}")
+          nats    <- ZIO.service[Nats]
+          _       <- nats.drain()
+          result  <- nats.publishString(subject, "after-drain").either
         yield assertTrue(result.isLeft)
       }
     ).provideLayerShared(
